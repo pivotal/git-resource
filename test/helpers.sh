@@ -182,7 +182,7 @@ make_annotated_tag() {
   local tag=$2
   local msg=$3
 
-  git -C $repo tag -a "$tag" -m "$msg"
+  git -C $repo tag -f -a "$tag" -m "$msg"
 
   git -C $repo describe --tags --abbrev=0
 }
@@ -191,6 +191,15 @@ check_uri() {
   jq -n "{
     source: {
       uri: $(echo $1 | jq -R .)
+    }
+  }" | ${resource_dir}/check | tee /dev/stderr
+}
+
+check_uri_with_branch() {
+  jq -n "{
+    source: {
+      uri: $(echo $1 | jq -R .),
+      branch: $(echo $2 | jq -R .)
     }
   }" | ${resource_dir}/check | tee /dev/stderr
 }
@@ -337,6 +346,19 @@ check_uri_with_tag_filter() {
   }" | ${resource_dir}/check | tee /dev/stderr
 }
 
+check_uri_with_tag_filter_given_branch() {
+  local uri=$1
+  local tag_filter=$2
+  local branch=$3
+  jq -n "{
+    source: {
+      uri: $(echo $uri | jq -R .),
+      tag_filter: $(echo $tag_filter | jq -R .),
+      branch: $(echo $branch | jq -R .)
+    }
+  }" | ${resource_dir}/check | tee /dev/stderr
+}
+
 check_uri_with_tag_filter_from() {
   local uri=$1
   local tag_filter=$2
@@ -392,6 +414,18 @@ get_uri() {
       short_ref_format: \"test-%s\"
     }
   }" | ${resource_dir}/in "$2" | tee /dev/stderr
+}
+
+get_uri_with_branch() {
+  jq -n "{
+    source: {
+      uri: $(echo $1 | jq -R .),
+      branch: $(echo $2 | jq -R .),
+    },
+    params: {
+      short_ref_format: \"test-%s\"
+    }
+  }" | ${resource_dir}/in "$3" | tee /dev/stderr
 }
 
 get_uri_with_git_crypt_key() {
